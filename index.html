@@ -16,7 +16,7 @@
   body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; padding: 0; }
   .container { max-width: 860px; margin: 0 auto; padding: 40px 24px; }
   header { margin-bottom: 32px; }
-  .logo-row { display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px; }
+  .logo-row { display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
   h1 { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: var(--accent); letter-spacing: -1px; }
   .logo-tag { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 3px; border: 1px solid var(--border); padding: 3px 8px; border-radius: 2px; }
   .subtitle { font-size: 13px; color: var(--text2); }
@@ -28,6 +28,7 @@
     margin-bottom: 24px;
     padding: 8px 0;
     border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
   }
   .format-btn {
     background: transparent;
@@ -59,6 +60,7 @@
     display: flex;
     gap: 10px;
     margin-bottom: 16px;
+    flex-wrap: wrap;
   }
   .barcode-input {
     flex: 1;
@@ -71,6 +73,7 @@
     font-size: 14px;
     outline: none;
     letter-spacing: 1px;
+    min-width: 200px;
   }
   .barcode-input:focus { border-color: var(--accent); }
   .barcode-input::placeholder { color: var(--text3); font-family: 'DM Mono', monospace; font-size: 12px; }
@@ -78,6 +81,7 @@
   .search-box {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
   }
   .search-input {
     flex: 1;
@@ -90,6 +94,7 @@
     font-size: 18px;
     font-style: italic;
     outline: none;
+    min-width: 200px;
   }
   .search-input:focus { border-color: var(--accent); }
   .search-input::placeholder { color: var(--text3); }
@@ -124,10 +129,11 @@
     gap: 12px;
     cursor: pointer;
     padding: 12px 0;
+    user-select: none;
   }
   .token-header:hover { opacity: 0.7; }
-  .token-header h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text3); }
-  .token-header .toggle-icon { color: var(--text3); font-size: 12px; transition: transform 0.2s; }
+  .token-header h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--text3); margin: 0; }
+  .token-header .toggle-icon { color: var(--text3); font-size: 12px; transition: transform 0.2s; display: inline-block; }
   .token-header.open .toggle-icon { transform: rotate(180deg); }
   .token-content {
     display: none;
@@ -138,8 +144,8 @@
     margin-top: 8px;
   }
   .token-content.show { display: block; }
-  .token-row { display: flex; gap: 10px; align-items: center; }
-  .token-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; }
+  .token-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .token-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; min-width: 200px; }
   .token-row input:focus { border-color: var(--accent); }
   .token-hint { font-size: 11px; color: var(--text3); margin-top: 12px; line-height: 1.6; }
   .token-hint a { color: var(--accent); text-decoration: none; }
@@ -179,7 +185,7 @@
   .seller-rating { color: var(--accent2); }
 
   .release-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
-  .release-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.15s; }
+  .release-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.15s; gap: 12px; flex-wrap: wrap; }
   .release-item:hover { border-color: var(--accent); background: var(--surface2); }
   .release-item .r-title { font-size: 14px; color: var(--text); margin-bottom: 3px; }
   .release-item .r-meta { font-size: 11px; color: var(--text3); }
@@ -200,7 +206,8 @@
     .stats-bar { grid-template-columns: repeat(2, 1fr); }
     .listing-card { grid-template-columns: 1fr; }
     .price-block { text-align: left; }
-    .format-filter { flex-wrap: wrap; }
+    .format-filter { gap: 8px; }
+    .format-btn { padding: 6px 14px; font-size: 12px; }
   }
 </style>
 </head>
@@ -243,7 +250,7 @@
 
   <!-- TOKEN PANEL - EN ALTA GİZLİ -->
   <div class="token-panel">
-    <div class="token-header" onclick="toggleTokenPanel()">
+    <div class="token-header" id="tokenHeader" onclick="toggleTokenPanel()">
       <h3>⚙️ API Ayarları</h3>
       <span class="toggle-icon">▼</span>
     </div>
@@ -276,38 +283,60 @@ const formatMap = {
   'cd': ['CD', 'CDr', 'CD-ROM']
 };
 
-if (token) {
-  document.getElementById('tokenInput').value = token;
-  setTokenStatus(true);
-}
-
+// Token panel kontrolü
 function toggleTokenPanel() {
   const content = document.getElementById('tokenContent');
-  const header = document.querySelector('.token-header');
-  content.classList.toggle('show');
-  header.classList.toggle('open');
+  const header = document.getElementById('tokenHeader');
+  
+  if (content.classList.contains('show')) {
+    content.classList.remove('show');
+    header.classList.remove('open');
+  } else {
+    content.classList.add('show');
+    header.classList.add('open');
+  }
+}
+
+// Token var mı kontrol et
+if (token) {
+  const tokenInput = document.getElementById('tokenInput');
+  if (tokenInput) tokenInput.value = token;
+  setTokenStatus(true);
 }
 
 function setFormatFilter(format) {
   currentFormat = format;
-  document.querySelectorAll('.format-btn').forEach(btn => {
+  const buttons = document.querySelectorAll('.format-btn');
+  buttons.forEach(btn => {
     btn.classList.remove('active');
+    if (btn.getAttribute('data-format') === format) {
+      btn.classList.add('active');
+    }
   });
-  document.querySelector(`.format-btn[data-format="${format}"]`).classList.add('active');
   
   // Arama yapıldıysa sonuçları temizle, ana ekrana dön
-  document.getElementById('mainContent').innerHTML = `
-    <div class="message-box">
-      <div style="font-size:36px;margin-bottom:12px;">${format === 'vinyl' ? '🎵' : (format === 'cassette' ? '📼' : '💿')}</div>
-      <div class="big">${format === 'vinyl' ? 'Plak' : (format === 'cassette' ? 'Kaset' : 'CD')} ara</div>
-      <div style="margin-top:8px;font-size:12px;">Barkod veya isimle arama yapın</div>
-    </div>`;
+  const mainContent = document.getElementById('mainContent');
+  if (mainContent) {
+    const formatIcon = format === 'vinyl' ? '🎵' : (format === 'cassette' ? '📼' : '💿');
+    const formatText = format === 'vinyl' ? 'Plak' : (format === 'cassette' ? 'Kaset' : 'CD');
+    mainContent.innerHTML = `
+      <div class="message-box">
+        <div style="font-size:36px;margin-bottom:12px;">${formatIcon}</div>
+        <div class="big">${formatText} ara</div>
+        <div style="margin-top:8px;font-size:12px;">Barkod veya isimle arama yapın</div>
+      </div>`;
+  }
   lastSearchResults = [];
 }
 
 function saveToken() {
-  const val = document.getElementById('tokenInput').value.trim();
-  if (!val) return;
+  const input = document.getElementById('tokenInput');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    alert('Lütfen bir token girin');
+    return;
+  }
   token = val;
   localStorage.setItem('discogs_token', val);
   setTokenStatus(true);
@@ -315,6 +344,7 @@ function saveToken() {
 
 function setTokenStatus(ok) {
   const el = document.getElementById('tokenStatus');
+  if (!el) return;
   el.className = 'token-status ' + (ok ? 'status-ok' : 'status-err');
   el.textContent = ok ? '✓ Token hazır' : '✗ Hata';
 }
@@ -351,11 +381,11 @@ async function searchByBarcode() {
   
   lastQuery = barcode;
   showLoading('Barkod aranıyor...');
-  document.getElementById('searchBtn').disabled = true;
+  const searchBtn = document.getElementById('searchBtn');
+  if (searchBtn) searchBtn.disabled = true;
   
   try {
-    // Discogs'ta barkod ile ara
-    const data = await discogsGet(`/database/search?barcode=${encodeURIComponent(barcode)}&type=release&per_page=10`);
+    const data = await discogsGet(`/database/search?barcode=${encodeURIComponent(barcode)}&type=release&per_page=20`);
     let results = data.results || [];
     
     // Format filter uygula
@@ -375,7 +405,7 @@ async function searchByBarcode() {
   } catch(e) {
     showApiError(e.message);
   }
-  document.getElementById('searchBtn').disabled = false;
+  if (searchBtn) searchBtn.disabled = false;
 }
 
 async function doSearch() {
@@ -385,7 +415,8 @@ async function doSearch() {
 
   lastQuery = q;
   showLoading('Aranıyor...');
-  document.getElementById('searchBtn').disabled = true;
+  const searchBtn = document.getElementById('searchBtn');
+  if (searchBtn) searchBtn.disabled = true;
 
   try {
     const data = await discogsGet(`/database/search?q=${encodeURIComponent(q)}&type=release&per_page=20`);
@@ -404,7 +435,7 @@ async function doSearch() {
   } catch(e) {
     showApiError(e.message);
   }
-  document.getElementById('searchBtn').disabled = false;
+  if (searchBtn) searchBtn.disabled = false;
 }
 
 function showReleases(releases) {
@@ -457,7 +488,7 @@ function renderListings(title, releaseId) {
   if (currentCondFilter !== 'all') {
     filtered = filtered.filter(l => {
       const c = (l.condition || '').toLowerCase();
-      if (currentCondFilter === 'nm') return c.includes('near mint') || c.includes('mint (m)');
+      if (currentCondFilter === 'nm') return c.includes('near mint') || c.includes('mint');
       if (currentCondFilter === 'vg') return c.includes('very good');
       if (currentCondFilter === 'g') return c.includes('good') && !c.includes('very good');
       return true;
@@ -482,7 +513,7 @@ function renderListings(title, releaseId) {
   let html = `
     <button class="back-btn" onclick="showReleases(lastSearchResults)">← Arama Sonuçlarına Dön</button>
     <div style="margin-bottom:18px;">
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-style:italic;color:var(--text);margin-bottom:4px;">${title}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-style:italic;color:var(--text);margin-bottom:4px;">${escHtml(title)}</div>
       <a href="https://www.discogs.com/marketplace?release_id=${releaseId}" target="_blank" style="font-size:11px;color:var(--text3);text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Discogs'ta Gör ↗</a>
     </div>
     <div class="stats-bar">
@@ -558,4 +589,12 @@ function showApiError(msg) {
       <strong>⚠️ Bağlantı Hatası</strong>
       ${msg}
       <ol style="margin-top:12px;padding-left:20px;">
-        <li>Token doğru mu? <a href="https://www.discogs.com/settings/developers" target="_blank" style="color:var(--ac
+        <li>Token doğru mu? <a href="https://www.discogs.com/settings/developers" target="_blank" style="color:var(--accent)">Yeni token al</a></li>
+        <li>Tarayıcın VPN veya engelleyici var mı?</li>
+        <li>Sayfayı yenile ve tekrar dene</li>
+      </ol>
+    </div>`;
+}
+</script>
+</body>
+</html>
