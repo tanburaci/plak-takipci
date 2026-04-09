@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plak Takipçi</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c0a; --surface: #1a1714; --surface2: #242018;
+    --border: #3a3228; --accent: #e8a020; --accent2: #c45c1a;
+    --text: #f0ebe3; --text2: #9a9080; --text3: #6a6050;
+    --green: #4caf7d; --red: #e05a4a; --radius: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; }
+  .container { max-width: 920px; margin: 0 auto; padding: 32px 24px; }
+
+  /* HEADER */
+  .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: var(--accent); letter-spacing: -1px; }
+  .subtitle { font-size: 12px; color: var(--text3); margin-bottom: 28px; }
+  .settings-btn { background: transparent; border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; color: var(--text3); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SETTINGS PANEL */
+  .settings-panel { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; display: none; }
+  .settings-panel.open { display: block; }
+  .settings-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 14px; }
+  .token-row { display: flex; gap: 10px; align-items: center; }
+  .token-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .token-input:focus { border-color: var(--accent); }
+  .token-input::placeholder { color: var(--text3); }
+  .token-hint { font-size: 11px; color: var(--text3); margin-top: 10px; line-height: 1.7; }
+  .token-hint a { color: var(--accent); text-decoration: none; }
+  .token-status { font-size: 11px; padding: 4px 10px; border-radius: 2px; white-space: nowrap; }
+  .status-ok { background: rgba(76,175,125,0.15); color: var(--green); border: 1px solid rgba(76,175,125,0.3); }
+  .status-err { background: rgba(224,90,74,0.15); color: var(--red); border: 1px solid rgba(224,90,74,0.3); }
+
+  /* SEARCH */
+  .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+  .search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; color: var(--text); font-family: 'Playfair Display', serif; font-size: 18px; font-style: italic; outline: none; transition: border-color 0.2s; }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+  .btn { background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius); padding: 14px 22px; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: background 0.2s; white-space: nowrap; }
+  .btn:hover { background: #f0b030; }
+  .btn:disabled { background: var(--border); color: var(--text3); cursor: not-allowed; }
+  .btn-sm { padding: 8px 16px; font-size: 11px; }
+
+  /* RELEASE LIST */
+  .release-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .release-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.15s; gap: 12px; }
+  .release-item:hover { border-color: var(--accent); background: var(--surface2); }
+  .r-title { font-size: 14px; color: var(--text); margin-bottom: 4px; }
+  .r-meta { font-size: 11px; color: var(--text3); display: flex; gap: 10px; flex-wrap: wrap; }
+  .r-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 2px; padding: 2px 7px; font-size: 10px; color: var(--text2); }
+  .pick-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 2px; padding: 6px 14px; font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; transition: all 0.15s; }
+  .pick-btn:hover { background: var(--accent); color: var(--bg); }
+  .back-btn { background: transparent; border: none; color: var(--text3); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; padding: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 6px; letter-spacing: 1px; }
+  .back-btn:hover { color: var(--accent); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .tab { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 10px 20px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all 0.15s; margin-bottom: -1px; }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* FILTERS */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 2px; }
+  .filter-btn { background: transparent; border: 1px solid var(--border); border-radius: 2px; padding: 5px 12px; color: var(--text2); font-family: 'DM Mono', monospace; font-size: 10px; cursor: pointer; letter-spacing: 1px; transition: all 0.15s; }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 5px 10px; color: var(--text2); font-family: 'DM Mono', monospace; font-size: 10px; outline: none; cursor: pointer; }
+  .filter-select option { background: var(--surface2); }
+  .ml-auto { margin-left: auto; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
+  .stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--text3); margin-bottom: 6px; }
+  .stat-value { font-size: 20px; color: var(--accent); font-family: 'Playfair Display', serif; }
+  .stat-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  /* CONDITION SUMMARY */
+  .cond-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+  .cond-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .cond-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 6px; }
+  .cond-price { font-size: 16px; font-family: 'Playfair Display', serif; color: var(--accent); }
+  .cond-count { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  /* LISTINGS */
+  .listing-grid { display: flex; flex-direction: column; gap: 8px; }
+  .listing-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; text-decoration: none; color: inherit; transition: all 0.15s; }
+  .listing-card:hover { border-color: var(--accent); background: var(--surface2); }
+  .l-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .l-artist { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+  .l-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .tag { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 2px 7px; border-radius: 2px; border: 1px solid var(--border); color: var(--text3); }
+  .tag-mint { background: rgba(76,175,125,0.1); border-color: rgba(76,175,125,0.3); color: var(--green); }
+  .tag-vg { background: rgba(76,175,125,0.05); border-color: rgba(76,175,125,0.15); color: #8ecfa8; }
+  .tag-fair { background: rgba(224,90,74,0.08); border-color: rgba(224,90,74,0.2); color: #e07060; }
+  .l-comment { font-size: 10px; color: var(--text3); line-height: 1.6; margin-bottom: 6px; }
+  .l-seller { font-size: 10px; color: var(--text3); }
+  .l-rating { color: var(--accent2); }
+  .price-block { text-align: right; min-width: 90px; }
+  .price-main { font-size: 22px; font-family: 'Playfair Display', serif; color: var(--accent); line-height: 1; }
+  .price-cur { font-size: 12px; color: var(--text3); }
+  .price-ship { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+  /* SALES HISTORY */
+  .history-grid { display: flex; flex-direction: column; gap: 6px; }
+  .history-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; }
+  .h-cond { font-size: 10px; }
+  .h-date { font-size: 10px; color: var(--text3); }
+  .h-price { font-size: 16px; font-family: 'Playfair Display', serif; color: var(--accent); text-align: right; }
+
+  /* LOADING / MESSAGES */
+  .loading { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .message-box { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .message-box .big { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text2); font-style: italic; margin-top: 10px; }
+  .error-box { background: rgba(224,90,74,0.08); border: 1px solid rgba(224,90,74,0.25); border-radius: var(--radius); padding: 18px 22px; color: #e07060; font-size: 12px; line-height: 1.8; }
+
+  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--text3); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .results-count { font-size: 11px; color: var(--text3); margin-bottom: 12px; }
+  .results-count span { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .cond-summary { grid-template-columns: repeat(2,1fr); }
+    .listing-card { grid-template-columns: 1fr; }
+    .price-block { text-align: left; }
+    .history-row { grid-template-columns: 1fr auto; }
+    .h-date { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header-row">
+    <h1>Plak Takipçi</h1>
+    <button class="settings-btn" onclick="toggleSettings()" id="settingsBtn">⚙ Ayarlar</button>
+  </div>
+  <p class="subtitle">Satılık ilanlar · Baskı bilgileri · Satış geçmişi · Fiyat karşılaştırma</p>
+
+  <!-- SETTINGS PANEL -->
+  <div class="settings-panel" id="settingsPanel">
+    <h3>🔑 Discogs API Token</h3>
+    <div class="token-row">
+      <input type="password" class="token-input" id="tokenInput" placeholder="Token buraya yapıştır..." autocomplete="off">
+      <button class="btn btn-sm" onclick="saveToken()">Kaydet</button>
+      <span id="tokenStatus"></span>
+    </div>
+    <p class="token-hint">
+      Token almak için: <a href="https://www.discogs.com/settings/developers" target="_blank">discogs.com/settings/developers</a> → <em>"Generate new token"</em> → kopyala → buraya yapıştır.
+    </p>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-box">
+    <input type="text" class="search-input" id="searchInput" placeholder="Plak adı, sanatçı veya katalog no..." onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="btn" id="searchBtn" onclick="doSearch()">Ara</button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="mainContent">
+    <div class="message-box">
+      <div style="font-size:40px">🎵</div>
+      <div class="big">Plak aramaya başla</div>
+      <div style="font-size:11px;margin-top:8px;color:var(--text3);">⚙ Ayarlar'dan token gir, sonra ara.</div>
+    </div>
+  </div>
+
+</div>
+<script>
+let token = localStorage.getItem('discogs_token') || '';
+let currentListings = [];
+let currentHistory = [];
+let currentCondFilter = 'all';
+let currentCountryFilter = 'all';
+let currentSort = 'price_asc';
+let currentTab = 'listings';
+let lastReleases = [];
+let activeRelease = null;
+
+if (token) {
+  document.getElementById('tokenInput').value = token;
+  setTokenStatus(true);
+}
+
+function toggleSettings() {
+  const p = document.getElementById('settingsPanel');
+  p.classList.toggle('open');
+  document.getElementById('settingsBtn').textContent = p.classList.contains('open') ? '✕ Kapat' : '⚙ Ayarlar';
+}
+
+function saveToken() {
+  const v = document.getElementById('tokenInput').value.trim();
+  if (!v) return;
+  token = v;
+  localStorage.setItem('discogs_token', v);
+  setTokenStatus(true);
+  toggleSettings();
+}
+
+function setTokenStatus(ok) {
+  const el = document.getElementById('tokenStatus');
+  el.className = 'token-status ' + (ok ? 'status-ok' : 'status-err');
+  el.textContent = ok ? '✓ Hazır' : '✗ Hata';
+}
+
+async function discogsGet(path) {
+  const url = 'https://api.discogs.com' + path;
+  const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url + (path.includes('?')?'&':'?') + 'token=' + token);
+  try {
+    const r = await fetch(url, { headers: { 'Authorization': `Discogs token=${token}`, 'User-Agent': 'PlakTakipci/1.0' } });
+    if (r.status === 405 || r.status === 0) throw new Error('CORS');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  } catch {
+    const r2 = await fetch(proxy);
+    if (!r2.ok) throw new Error('Bağlantı hatası');
+    const w = await r2.json();
+    return JSON.parse(w.contents);
+  }
+}
+
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  if (!token) { toggleSettings(); return; }
+  showLoading('Aranıyor...');
+  document.getElementById('searchBtn').disabled = true;
+  try {
+    const d = await discogsGet(`/database/search?q=${encodeURIComponent(q)}&type=release&per_page=15`);
+    lastReleases = d.results || [];
+    renderReleases();
+  } catch(e) { showError(e.message); }
+  document.getElementById('searchBtn').disabled = false;
+}
+
+function renderReleases() {
+  if (!lastReleases.length) {
+    document.getElementById('mainContent').innerHTML = `<div class="message-box"><div style="font-size:32px">🔍</div><div class="big">Sonuç bulunamadı</div></div>`;
+    return;
+  }
+  let html = `<div class="release-list">`;
+  lastReleases.forEach(r => {
+    const country = r.country || '';
+    const year = r.year || '?';
+    const label = r.label?.[0] || '';
+    const format = r.format?.[0] || '';
+    const catno = r.catno || '';
+    html += `
+      <div class="release-item" onclick="loadRelease(${r.id}, ${JSON.stringify(r.title)})">
+        <div style="flex:1;min-width:0">
+          <div class="r-title">${esc(r.title)}</div>
+          <div class="r-meta">
+            ${country ? `<span class="r-badge">🌍 ${esc(country)}</span>` : ''}
+            ${year !== '?' ? `<span class="r-badge">📅 ${year}</span>` : ''}
+            ${label ? `<span class="r-badge">${esc(label)}</span>` : ''}
+            ${format ? `<span class="r-badge">${esc(format)}</span>` : ''}
+            ${catno ? `<span class="r-badge">${esc(catno)}</span>` : ''}
+          </div>
+        </div>
+        <button class="pick-btn">Gör →</button>
+      </div>`;
+  });
+  html += `</div>`;
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+async function loadRelease(id, title) {
+  activeRelease = { id, title };
+  showLoading('Yükleniyor...');
+  try {
+    // İlanları yükle
+    const listData = await discogsGet(`/marketplace/listings?release_id=${id}&status=For+Sale&per_page=100&sort=price&sort_order=asc`);
+    currentListings = listData.listings || [];
+
+    // Satış geçmişini yükle (hata verirse boş bırak)
+    try {
+      const h = await discogsGet(`/marketplace/listings?release_id=${id}&status=Sold&per_page=50&sort=listed&sort_order=desc`);
+      currentHistory = h.listings || [];
+    } catch {
+      currentHistory = [];
+    }
+
+    currentCondFilter = 'all';
+    currentCountryFilter = 'all';
+    currentSort = 'price_asc';
+    currentTab = 'listings';
+    renderDetail(title, id, {});
+  } catch(e) { showError(e.message); }
+}
+
+function getCondClass(c) {
+  if (!c) return '';
+  const l = c.toLowerCase();
+  if (l.includes('mint') || l.includes('nm')) return 'tag-mint';
+  if (l.includes('very good') || l.includes('vg')) return 'tag-vg';
+  return 'tag-fair';
+}
+
+function getCondGroup(c) {
+  if (!c) return 'other';
+  const l = c.toLowerCase();
+  if (l.includes('mint (m)')) return 'M';
+  if (l.includes('near mint')) return 'NM';
+  if (l.includes('very good plus') || l.includes('vg+')) return 'VG+';
+  if (l.includes('very good')) return 'VG';
+  if (l.includes('good plus') || l.includes('g+')) return 'G+';
+  if (l.includes('good')) return 'G';
+  if (l.includes('fair')) return 'F';
+  if (l.includes('poor')) return 'P';
+  return 'other';
+}
+
+function renderDetail(title, id, stats) {
+  // Filter listings
+  let filtered = [...currentListings];
+  if (currentCondFilter !== 'all') filtered = filtered.filter(l => getCondGroup(l.condition) === currentCondFilter);
+  if (currentCountryFilter !== 'all') filtered = filtered.filter(l => (l.ships_from||'') === currentCountryFilter);
+  if (currentSort === 'price_asc') filtered.sort((a,b) => gp(a)-gp(b));
+  else if (currentSort === 'price_desc') filtered.sort((a,b) => gp(b)-gp(a));
+  else if (currentSort === 'cond') {
+    const o = {'M':0,'NM':1,'VG+':2,'VG':3,'G+':4,'G':5,'F':6,'P':7};
+    filtered.sort((a,b) => (o[getCondGroup(a.condition)]??9)-(o[getCondGroup(b.condition)]??9));
+  }
+
+  const prices = filtered.map(gp).filter(p=>p>0);
+  const minP = prices.length ? Math.min(...prices) : 0;
+  const maxP = prices.length ? Math.max(...prices) : 0;
+  const avgP = prices.length ? prices.reduce((a,b)=>a+b,0)/prices.length : 0;
+  const currency = currentListings[0]?.price?.currency || 'USD';
+
+  // Countries
+  const countries = [...new Set(currentListings.map(l=>l.ships_from).filter(Boolean))].sort();
+
+  // Condition breakdown
+  const condGroups = {};
+  currentListings.forEach(l => {
+    const g = getCondGroup(l.condition);
+    if (!condGroups[g]) condGroups[g] = [];
+    condGroups[g].push(gp(l));
+  });
+  const condOrder = ['M','NM','VG+','VG','G+','G','F','P'];
+  const condCards = condOrder.filter(c=>condGroups[c]).map(c => {
+    const ps = condGroups[c].filter(p=>p>0);
+    const min = ps.length ? Math.min(...ps) : 0;
+    return { name: c, count: condGroups[c].length, min };
+  });
+
+  const tid = JSON.stringify(title);
+
+  let html = `
+    <button class="back-btn" onclick="renderReleases()">← Arama Sonuçlarına Dön</button>
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-style:italic;color:var(--text);margin-bottom:6px;">${esc(title)}</div>
+      <a href="https://www.discogs.com/marketplace?release_id=${id}" target="_blank" style="font-size:10px;color:var(--text3);text-decoration:none;letter-spacing:1px;text-transform:uppercase;">Discogs'ta Gör ↗</a>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Toplam İlan</div><div class="stat-value">${currentListings.length}</div></div>
+      <div class="stat-card"><div class="stat-label">En Ucuz</div><div class="stat-value">${minP?fmt(minP):'—'}</div><div class="stat-sub">${currency}</div></div>
+      <div class="stat-card"><div class="stat-label">Ortalama</div><div class="stat-value">${avgP?fmt(avgP):'—'}</div><div class="stat-sub">${currency}</div></div>
+      <div class="stat-card"><div class="stat-label">En Pahalı</div><div class="stat-value">${maxP?fmt(maxP):'—'}</div><div class="stat-sub">${currency}</div></div>
+    </div>
+
+    <!-- CONDITION SUMMARY -->
+    ${condCards.length ? `
+    <div class="section-title">Kondisyona Göre En Düşük Fiyat</div>
+    <div class="cond-summary">
+      ${condCards.map(c=>`
+        <div class="cond-card" style="cursor:pointer" onclick="setCondFilter('${c.name}',${tid},${id})">
+          <div class="cond-name">${c.name}</div>
+          <div class="cond-price">${c.min?fmt(c.min):'—'} <span style="font-size:10px;color:var(--text3)">${currency}</span></div>
+          <div class="cond-count">${c.count} ilan</div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab ${currentTab==='listings'?'active':''}" onclick="switchTab('listings',${tid},${id})">Satılık İlanlar (${currentListings.length})</button>
+      <button class="tab ${currentTab==='history'?'active':''}" onclick="switchTab('history',${tid},${id})">Satış Geçmişi${currentHistory.length?` (${currentHistory.length})`:''}</button>
+    </div>`;
+
+  if (currentTab === 'listings') {
+    html += `
+      <!-- FILTERS -->
+      <div class="filter-bar">
+        <span class="filter-label">Durum:</span>
+        <button class="filter-btn ${currentCondFilter==='all'?'active':''}" onclick="setCondFilter('all',${tid},${id})">Tümü</button>
+        <button class="filter-btn ${currentCondFilter==='M'?'active':''}" onclick="setCondFilter('M',${tid},${id})">M</button>
+        <button class="filter-btn ${currentCondFilter==='NM'?'active':''}" onclick="setCondFilter('NM',${tid},${id})">NM</button>
+        <button class="filter-btn ${currentCondFilter==='VG+'?'active':''}" onclick="setCondFilter('VG+',${tid},${id})">VG+</button>
+        <button class="filter-btn ${currentCondFilter==='VG'?'active':''}" onclick="setCondFilter('VG',${tid},${id})">VG</button>
+        <button class="filter-btn ${currentCondFilter==='G+'?'active':''}" onclick="setCondFilter('G+',${tid},${id})">G+</button>
+        <button class="filter-btn ${currentCondFilter==='G'?'active':''}" onclick="setCondFilter('G',${tid},${id})">G</button>
+        ${countries.length > 1 ? `
+        <select class="filter-select ml-auto" onchange="setCountryFilter(this.value,${tid},${id})">
+          <option value="all">🌍 Tüm Ülkeler</option>
+          ${countries.map(c=>`<option value="${esc(c)}" ${currentCountryFilter===c?'selected':''}>${esc(c)}</option>`).join('')}
+        </select>` : ''}
+        <select class="filter-select ${countries.length <= 1 ? 'ml-auto' : ''}" onchange="setSortFilter(this.value,${tid},${id})">
+          <option value="price_asc" ${currentSort==='price_asc'?'selected':''}>Fiyat ↑</option>
+          <option value="price_desc" ${currentSort==='price_desc'?'selected':''}>Fiyat ↓</option>
+          <option value="cond" ${currentSort==='cond'?'selected':''}>Durum</option>
+        </select>
+      </div>
+      <div class="results-count"><span>${filtered.length}</span> ilan gösteriliyor</div>
+      <div class="listing-grid">`;
+
+    if (!filtered.length) {
+      html += `<div class="message-box"><div class="big">Bu filtreyle ilan yok</div></div>`;
+    } else {
+      filtered.slice(0,60).forEach(l => {
+        const cond = l.condition || '';
+        const sleeve = l.sleeve_condition || '';
+        const shipP = l.shipping_price?.value || 0;
+        const totalP = gp(l);
+        const rating = l.seller?.stats?.rating ? `★ ${parseFloat(l.seller.stats.rating).toFixed(1)}` : '';
+        const ships = l.ships_from || '';
+        html += `
+          <a class="listing-card" href="https://www.discogs.com/sell/item/${l.id}" target="_blank">
+            <div>
+              <div class="l-title">${esc(l.release?.title||'Bilinmiyor')}</div>
+              <div class="l-artist">${esc(l.release?.artist||'')}</div>
+              <div class="l-tags">
+                <span class="tag ${getCondClass(cond)}">${esc(cond)}</span>
+                ${sleeve?`<span class="tag">Kapak: ${esc(sleeve)}</span>`:''}
+                ${ships?`<span class="tag">📍 ${esc(ships)}</span>`:''}
+              </div>
+              ${l.comment?`<div class="l-comment">${esc(l.comment.substring(0,140))}${l.comment.length>140?'...':''}</div>`:''}
+              <div class="l-seller">Satıcı: ${esc(l.seller?.username||'?')} ${rating?`<span class="l-rating">${rating}</span>`:''}</div>
+            </div>
+            <div class="price-block">
+              <div class="price-main">${totalP?fmt(totalP):'—'} <span class="price-cur">${currency}</span></div>
+              <div class="price-ship">${shipP>0?`+${fmt(shipP)} kargo`:'kargo ayrı'}</div>
+            </div>
+          </a>`;
+      });
+    }
+    html += `</div>`;
+  } else {
+    // HISTORY TAB
+    html += `<div class="section-title">Geçmiş Satışlar</div>`;
+    if (!currentHistory.length) {
+      html += `<div class="message-box"><div class="big">Satış geçmişi bulunamadı</div><div style="font-size:11px;margin-top:8px;color:var(--text3)">Bu plak için geçmiş satış verisi yok veya API erişimi kısıtlı.</div></div>`;
+    } else {
+      html += `<div class="history-grid">`;
+      currentHistory.forEach(l => {
+        const cond = l.condition || '';
+        const p = gp(l);
+        const date = l.posted ? new Date(l.posted).toLocaleDateString('tr-TR') : '';
+        html += `
+          <div class="history-row">
+            <span class="tag ${getCondClass(cond)} h-cond">${esc(cond)}</span>
+            <span class="h-date">${date}</span>
+            <div class="h-price">${p?fmt(p):'—'} <span style="font-size:10px;color:var(--text3)">${currency}</span></div>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+  }
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function switchTab(tab, title, id) { currentTab = tab; renderDetail(title, id, {}); }
+function setCondFilter(f, title, id) { currentCondFilter = f; renderDetail(title, id, {}); }
+function setCountryFilter(f, title, id) { currentCountryFilter = f; renderDetail(title, id, {}); }
+function setSortFilter(s, title, id) { currentSort = s; renderDetail(title, id, {}); }
+
+function gp(l) { return parseFloat(l.price?.value || 0); }
+function fmt(n) { return Number(n).toFixed(2); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function showLoading(msg) {
+  document.getElementById('mainContent').innerHTML = `<div class="loading"><div class="spinner"></div>${msg}</div>`;
+}
+function showError(msg) {
+  document.getElementById('mainContent').innerHTML = `<div class="error-box">⚠️ <strong>Hata:</strong> ${msg}<br><br><small>Token doğru mu? <a href="https://www.discogs.com/settings/developers" target="_blank" style="color:var(--accent)">Yeni token al</a></small></div>`;
+}
+</script>
+</body>
+</html>
